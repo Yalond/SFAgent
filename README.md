@@ -15,8 +15,8 @@ EXEC command execution requires WSL (Windows Subsystem for Linux) to be installe
 
 Clone the repo from github details below
 ```
-git clone repo
-cd repo
+git clone https://github.com/Yalond/SFAgent.git
+cd SFAgent
 ```
 Install the requirements detailed int he requirements.txt
 ```bash
