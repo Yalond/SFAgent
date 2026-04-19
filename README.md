@@ -31,7 +31,7 @@ CHAT_ENDPOINT=http://127.0.0.1:8080/v1/chat/completions
 
 # Openrouter example
 CHAT_ENDPOINT=https://openrouter.ai/api/v1/chat/completions
-CHAT_API_KEY=<opoenrouter key>
+CHAT_API_KEY=<openrouter key>
 MODEL=nvidia/nemotron-3-super-120b-a12b:free
 
 BRAVE_SEARCH_API_KEY=<search key>
