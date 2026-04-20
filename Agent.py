@@ -20,11 +20,10 @@ Skills: Store skills in the skills folder.
 
 load_dotenv()
 
-DEBUG = True
+DEBUG = False
 
 CHAT_ENDPOINT = os.getenv("CHAT_ENDPOINT")
 API_KEY = os.getenv("CHAT_API_KEY", "")
-if API_KEY == "" and DEBUG: print("Warning no API KEY set")
 BRAVE_SEARCH_API_KEY = os.getenv("BRAVE_SEARCH_API_KEY")
 
 
@@ -135,9 +134,9 @@ def write_file(filename: str, contents: str, encoding="utf-8") -> str:
         "new": {
           "type":"string", "description":"the new text to change."},
         "count": {
-          "type":"string", "description":"How many occurrences to replace, 0 means replace all occurrences. Default value is 0"},
+          "type":"int", "description":"How many occurrences to replace, 0 means replace all occurrences. Default value is 0"},
         "decode_escape_sequences": {
-          "type":"string", "description":"default is True"}
+          "type":"bool", "description":"default is True"}
       },
       "required": ["filename", "old", "new"]
     }
@@ -150,7 +149,7 @@ def edit_file(filename: str, old: str, new:str, count:int=0, decode_escape_seque
     try:
         with open(filename, "r") as f:
             data = f.read()
-            res, amount_replaced = re.subn(old, new, data, 0)
+            res, amount_replaced = re.subn(old, new, data, count)
         with open(filename, "w") as f:
             f.write(res)
             return f"Edited {filename}, changed {amount_replaced} occurrences"
@@ -409,14 +408,17 @@ def run_agent(system_prompt: str, tool_definitions: list[dict]):
       done = True
 
 def parse_args():
+  global SKILL_DIR
+  global DEBUG
   parser = argparse.ArgumentParser()
   parser.add_argument("--skilldir", help="Specify the skill folder, default is the currentdir/Skills")
   parser.add_argument("--debug", action="store_true", help="Print debug messages")
 
   args = parser.parse_args()
 
-  if args.skilldir: SKILL_DIR = args.skildir
-  if args.debug: DEBUG = args.debug
+  if args.skilldir: SKILL_DIR = args.skilldir
+  DEBUG = args.debug
+
 
 def main():
   parse_args()
