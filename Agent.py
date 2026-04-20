@@ -36,6 +36,8 @@ SKILL_DIR = os.path.join(os.getcwd(), "Skills")
 
 GLOBAL_TOOL_LIST: list[dict] = []
 
+DANGEROUSLY_SKIP_EXEC_CONFIRMATIONS = False
+
 def default_system_prompt() -> str:
   return f"""
 ### About You
@@ -112,10 +114,9 @@ def read_file(filename: str, encoding: str='utf-8') -> str:
         "filename": {"type": "string"},
         "contents": {"type": "string"},
         "encoding": {"type": "string", "description": "Default is utf-8, change this if there's a problem writing to a file"}
-      }
-    },
-
-    "required": ["filename", "contents"]
+      },
+      "required": ["filename", "contents"]
+    }
 })
 def write_file(filename: str, contents: str, encoding="utf-8") -> str:
   with open(filename, "w", encoding=encoding) as f:
@@ -178,8 +179,9 @@ def exec_command(command: str) -> str:
   for blocked_command in blocked_commands:
     if blocked_command in command: return "Action Blocked: " + blocked_commands[blocked_command]
 
-  confirmation = input(f"Press [y/N] to run: '{command}' > ")
-  if confirmation != 'y': return "ACTION BLOCKED: User rejected the command execution."
+  if not DANGEROUSLY_SKIP_EXEC_CONFIRMATIONS:
+    confirmation = input(f"Press [y/N] to run: '{command}' > ")
+    if confirmation != 'y': return "ACTION BLOCKED: User rejected the command execution."
 
   to_run = ("wsl " if os.name == "nt" else "") + command
 
@@ -408,17 +410,22 @@ def run_agent(system_prompt: str, tool_definitions: list[dict]):
       done = True
 
 def parse_args():
+
   global SKILL_DIR
   global DEBUG
+  global DANGEROUSLY_SKIP_EXEC_CONFIRMATIONS
+
   parser = argparse.ArgumentParser()
   parser.add_argument("--skilldir", help="Specify the skill folder, default is the currentdir/Skills")
   parser.add_argument("--debug", action="store_true", help="Print debug messages")
+  parser.add_argument("--dangerously_skip_exec_confirmations", action="store_true", help="Skip all exec confirmations, allows the agent to to execute arbitrary system commands and not prompt you for confirmation.")
 
   args = parser.parse_args()
 
   if args.skilldir: SKILL_DIR = args.skilldir
-  DEBUG = args.debug
 
+  DEBUG = args.debug
+  DANGEROUSLY_SKIP_EXEC_CONFIRMATIONS = args.dangerously_skip_exec_confirmations
 
 def main():
   parse_args()

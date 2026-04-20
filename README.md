@@ -11,7 +11,8 @@ A lightweight, hand crafted, artisanal, computer-use agent written in Python. Th
 
 ### How to Run
 
-EXEC command execution requires WSL (Windows Subsystem for Linux) to be installed, see [here](https://learn.microsoft.com/en-us/windows/wsl/install) for instructions on how to install it.
+> **Windows Specific:**
+  EXEC command execution requires WSL (Windows Subsystem for Linux) to be installed, see [here](https://learn.microsoft.com/en-us/windows/wsl/install) for instructions on how to install it.
 
 Clone the repo from github details below
 ```
