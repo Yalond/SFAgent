@@ -7,6 +7,7 @@ import re
 import trafilatura
 from dotenv import load_dotenv
 import argparse
+from pathlib import Path
 
 """
   ╭─╮╭─╴╭─╮╭─╴╭─╴╭╮╷╶┬╴
@@ -46,7 +47,7 @@ You are a helpful computer-use agent. You have access to the files and folders o
 
 ### Skill Usage
 
-You have access to a number of skills. List the skills by using the list_skill tool. Skills should be used to help you accomplish broader tasks than the tools alone. For example, you may have a weather skill that will tell you how to get information on the current weather. A skill is a folder containing a SKILL.md file that you should read to learn the skill, as well as optionally other files that the SKILL.md file will tell you how to use. 
+You have access to a number of skills. List the skills by using the list_skills tool. Skills should be used to help you accomplish broader tasks than the tools alone. For example, you may have a weather skill that will tell you how to get information on the current weather. A skill is a folder containing a SKILL.md file that you should read to learn the skill, as well as optionally other files that the SKILL.md file will tell you how to use. 
 
 Skills are just ways to help you perform tasks more efficiently, you don't *need* skills to perform tasks.
 
@@ -121,7 +122,7 @@ def read_file(filename: str, encoding: str='utf-8') -> str:
 def write_file(filename: str, contents: str, encoding="utf-8") -> str:
   with open(filename, "w", encoding=encoding) as f:
     f.write(contents)
-    return f"Wrote contents successfully to ${filename}!"
+    return f"Wrote contents successfully to {filename}!"
 
 @register_tool({
     "description": "Edit a file via a diff",
@@ -167,7 +168,6 @@ def edit_file(filename: str, old: str, new:str, count:int=0, decode_escape_seque
     "required": ["command"]
   }
 })
-
 def exec_command(command: str) -> str:
 
   blocked_commands = {
@@ -195,23 +195,46 @@ def exec_command(command: str) -> str:
     return f"Error executing command: {e}"
 
 
+def parse_skill_md_metadata(skill_md: str) -> dict|None:
+  processing = False
+  rows = []
+
+  try:
+    with open(skill_md, encoding='utf-8') as f:
+      for line in f.readlines():
+        if re.match("^---.*$", line.strip()):
+          if processing:
+            return {k:v for k, v in (x.strip().split(":", 1) for x in rows)}
+          else: processing = True
+        else:
+          rows.append(line.strip())
+      return {}
+  except FileNotFoundError:
+    return None
+
+
 def get_list_of_skills() -> list[dict]:
 
   skill_store = []
 
+  if not os.path.isdir(SKILL_DIR):
+    Path(SKILL_DIR).mkdir(parents=True,exist_ok=True)
+
   for folder in os.listdir(SKILL_DIR):
+
     skill_directory = f"{SKILL_DIR}/{folder}"
     skill_md = f"{SKILL_DIR}/{folder}/SKILL.md"
 
-    with open(skill_md, encoding='utf-8') as f:
-      lines = f.readlines()
-      skill_data = {k:v for k, v in (x.strip().split(":", 1) for x in lines[1:3])}
-      skill_data["skill_directory"] = skill_directory
-      skill_data["skill_file"] = skill_md
-      skill_store.append(skill_data)
+    skill_data = parse_skill_md_metadata(skill_md)
+    if skill_data is None: continue
+
+    skill_data["skill_directory"] = skill_directory
+    skill_data["skill_file"] = skill_md
+    skill_store.append(skill_data)
 
   return skill_store
 
+print(get_list_of_skills())
 
 @register_tool({
   "description": "Returns a list of skills, each element in the following format {\"name\":\"skill_name\", \"description\":\"skill_description\", \"skill_directory\": \"the directory of the skill\", \"skill_file\":\"The skill markdown file, read this with the read_file tool to learn the skill\"}",
